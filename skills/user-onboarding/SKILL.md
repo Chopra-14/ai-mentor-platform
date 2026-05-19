@@ -94,3 +94,22 @@ After collecting all onboarding responses, save the user preferences into persis
   "goals": ["Interview Preparation", "Building Projects"],
   "timezone": "Asia/Kolkata"
 }
+## Completion Message
+
+After successfully saving the memory, send a confirmation message to the user.
+
+Example:
+
+"🎉 Your profile has been successfully configured!
+You will now receive personalized daily tech briefs, interview questions, and learning insights every evening."
+
+---
+
+## Important Rules
+
+- Always collect all four onboarding fields.
+- Ensure domains and goals support multiple values.
+- Ensure the memory schema matches the required structure exactly.
+- Use a friendly and professional conversational tone.
+- Do not skip timezone collection.
+- Persist memory before ending the onboarding flow.
