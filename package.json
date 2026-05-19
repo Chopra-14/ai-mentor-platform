@@ -1,24 +1,17 @@
 {
   "name": "openclaw-telegram-learning-assistant",
   "version": "1.0.0",
-  "description": "",
+  "description": "Personalized AI Learning Assistant using OpenClaw, Telegram, Ollama, and Docker",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Chopra-14/openclaw-telegram-learning-assistant.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/Chopra-14/openclaw-telegram-learning-assistant/issues"
-  },
-  "homepage": "https://github.com/Chopra-14/openclaw-telegram-learning-assistant#readme"
-}
-"scripts": {
-  "start": "node index.js"
+  "keywords": [
+    "openclaw",
+    "telegram-bot",
+    "ollama",
+    "ai-assistant"
+  ],
+  "author": "Sathvika",
+  "license": "MIT"
 }

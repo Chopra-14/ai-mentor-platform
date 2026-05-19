@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+  openclaw-agent:
+    build: .
+    container_name: openclaw-agent
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - ollama
+      - searxng
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+
+  searxng:
+    image: searxng/searxng
+    container_name: searxng
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
