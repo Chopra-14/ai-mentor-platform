@@ -1,0 +1,40 @@
+{
+  "model": {
+    "provider": "ollama",
+    "model": "llama3",
+    "baseUrl": "http://localhost:11434"
+  },
+
+  "tools": {
+    "web_search": {
+      "provider": "searxng",
+      "baseUrl": "http://searxng:8080"
+    }
+  },
+
+  "plugins": {
+    "telegram": {
+      "enabled": true,
+      "token": "YOUR_TOKEN_HERE"
+    }
+  },
+
+  "memory": {
+    "enabled": true,
+    "type": "persistent"
+  },
+
+  "cron": [
+    {
+      "name": "nightly-tech-brief",
+      "schedule": "0 21 * * *",
+      "timezone": "{{user.timezone}}",
+      "prompt": "Run daily-quiz skill"
+    }
+  ],
+
+  "skills": [
+    "skills/user-onboarding/SKILL.md",
+    "skills/daily-quiz/SKILL.md"
+  ]
+}
