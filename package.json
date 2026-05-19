@@ -19,3 +19,6 @@
   },
   "homepage": "https://github.com/Chopra-14/openclaw-telegram-learning-assistant#readme"
 }
+"scripts": {
+  "start": "node index.js"
+}
