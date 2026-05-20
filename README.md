@@ -279,6 +279,30 @@ The Docker Compose setup orchestrates:
 - Analytics dashboard
 - Real-time notifications
 
+# 📸 Project Screenshots
+
+## Telegram Bot Creation
+
+![Telegram Bot Creation](screenshots/telegram-bot-creation.png)
+
+---
+
+## Bot Successfully Created
+
+![Bot Created](screenshots/bot-created.png)
+
+---
+
+## Docker Containers Running
+
+![Docker Running](screenshots/docker-running.png)
+
+---
+
+## Ollama Local LLM Running
+
+![Ollama Terminal](screenshots/ollama-terminal.png)
+
 ---
 
 # 👩‍💻 Author
