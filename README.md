@@ -1,4 +1,7 @@
-
+![Node.js](https://img.shields.io/badge/Node.js-20-green)
+![Docker](https://img.shields.io/badge/Docker-Enabled-blue)
+![Ollama](https://img.shields.io/badge/Ollama-llama3-orange)
+![Telegram](https://img.shields.io/badge/Telegram-Bot-blue)
 # 🦞 OpenClaw Telegram Learning Assistant
 
 A personalized AI-powered Telegram learning assistant built using OpenClaw, Ollama, Docker, and SearXNG.
