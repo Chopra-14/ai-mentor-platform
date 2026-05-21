@@ -53,5 +53,32 @@ const quizSchema = new mongoose.Schema(
     timestamps: true
   }
 );
+const mongoose = require("mongoose");
+
+const quizSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
+
+    domain: String,
+
+    questions: [
+      {
+        question: String,
+        answer: String,
+        userAnswer: String,
+        score: Number
+      }
+    ],
+
+    totalScore: Number
+  },
+  {
+    timestamps: true
+  }
+);
+
 
 module.exports = mongoose.model("Quiz", quizSchema);

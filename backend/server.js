@@ -9,7 +9,7 @@ const authRoutes = require("./routes/authRoutes");
 const quizRoutes = require("./routes/quizRoutes");
 const recommendationRoutes =
 require("./routes/recommendationRoutes");
-
+const quizRoutes = require("./routes/quizRoutes");
 
 connectDB();
 
