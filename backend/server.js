@@ -1,8 +1,13 @@
-const express = require("express");
-const cors = require("cors");
 const dotenv = require("dotenv");
 
 dotenv.config();
+const express = require("express");
+const router = express.Router();
+const mongoose = require("mongoose");
+
+const User = require("../models/User");
+const Quiz = require("../models/Quiz");
+
 
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
