@@ -10,36 +10,27 @@ require("../models/Recommendation");
 const {
   sendRecommendationEmail
 } = require("../services/emailService");
+const { protect } = require("../middleware/authMiddleware");
 
-router.post("/generate", async (req, res) => {
+router.post("/generate", protect, async (req, res) => {
 
   try {
 
-    const { userId } = req.body;
-
+    const userId = req.user ? req.user._id : req.body.userId;
     const user = await User.findById(userId);
 
     const weakTopic =
       user.weak_topics?.[0] ||
-      "Docker Networking";
+      "System Design";
 
-    let recommendations = [];
-
-    recommendations = [
-      "Revise bridge networking",
-      "Practice container communication",
-      "Learn Docker Compose networking"
-    ];
+    const { generateRecommendations } = require("../services/aiService");
+    const recommendations = await generateRecommendations(weakTopic);
 
     const recommendation =
       await Recommendation.create({
-
         user: userId,
-
         weak_topic: weakTopic,
-
         recommendations
-
       });
 
     await sendRecommendationEmail(

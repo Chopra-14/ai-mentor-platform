@@ -13,5 +13,10 @@
     "ai-assistant"
   ],
   "author": "Sathvika",
+  "dependencies": {
+    "axios": "^1.6.8",
+    "dotenv": "^16.4.5",
+    "node-telegram-bot-api": "^0.65.1"
+  },
   "license": "MIT"
 }

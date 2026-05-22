@@ -9,8 +9,8 @@ const connectDB = require("./config/db");
 
 const authRoutes = require("./routes/authRoutes");
 const quizRoutes = require("./routes/quizRoutes");
-const recommendationRoutes =
-  require("./routes/recommendationRoutes");
+const recommendationRoutes = require("./routes/recommendationRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 connectDB();
 
@@ -28,10 +28,8 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/quiz", quizRoutes);
 
-app.use(
-  "/api/recommendation",
-  recommendationRoutes
-);
+app.use("/api/recommendation", recommendationRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.get("/", (req, res) => {
   res.send("AI Learning Assistant Backend Running");

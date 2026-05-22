@@ -1,9 +1,11 @@
 const User = require("../models/User");
 const Quiz = require("../models/Quiz");
+const { generateQuizQuestions, evaluateUserAnswer } = require("../services/aiService");
 
 const generateQuiz = async (req, res) => {
   try {
-    const { userId, domain } = req.body;
+    const userId = req.user ? req.user._id : req.body.userId;
+    const { domain } = req.body;
 
     const user = await User.findById(userId);
 
@@ -13,35 +15,16 @@ const generateQuiz = async (req, res) => {
       });
     }
 
-    let difficulty = user.difficulty_level;
-
-    let prompt = "";
-
-    if (difficulty === "Beginner") {
-      prompt = `Generate beginner level ${domain} interview questions`;
-    }
-
-    if (difficulty === "Intermediate") {
-      prompt = `Generate intermediate level ${domain} interview questions`;
-    }
-
-    if (difficulty === "Advanced") {
-      prompt = `Generate advanced level ${domain} interview questions because the user consistently scores above 85%`;
-    }
-
-    const sampleQuestions = [
-      "Explain REST API",
-      "What is Docker?",
-      "What is JWT authentication?",
-      "Explain MongoDB",
-      "What is CI/CD?"
-    ];
+    let difficulty = user.difficulty_level || "Beginner";
+    
+    // Use AI to generate real questions dynamically
+    const generatedQuestions = await generateQuizQuestions(domain, difficulty);
 
     const quiz = await Quiz.create({
       user: user._id,
       domain,
       difficulty,
-      questions: sampleQuestions.map((q) => ({
+      questions: generatedQuestions.map((q) => ({
         question: q
       }))
     });
@@ -62,8 +45,8 @@ const generateQuiz = async (req, res) => {
 
 const updatePerformance = async (req, res) => {
   try {
+    const userId = req.user ? req.user._id : req.body.userId;
     const {
-      userId,
       average_score,
       weak_topics
     } = req.body;
@@ -119,45 +102,17 @@ const evaluateAnswer = async (req, res) => {
 
     const question = quiz.questions[questionIndex];
 
-    let score = 0;
-
-    let feedback = "";
-
-    if (user_answer.length > 20) {
-      score = 8;
-
-      feedback = `
-Strengths:
-- Good explanation provided
-- Answer has proper detail
-
-Improvements:
-- Add more technical depth
-- Include real-world examples
-`;
-    } else {
-      score = 4;
-
-      feedback = `
-Strengths:
-- Attempted the question
-
-Improvements:
-- Provide more detailed explanation
-- Add technical concepts
-`;
-    }
+    // Use AI to evaluate user answer
+    const evaluation = await evaluateUserAnswer(question.question, user_answer);
 
     question.user_answer = user_answer;
-
-    question.ai_feedback = feedback;
-
-    question.score = score;
+    question.ai_feedback = evaluation.feedback;
+    question.score = evaluation.score;
 
     await quiz.save();
 
     const totalScore = quiz.questions.reduce(
-      (sum, q) => sum + q.score,
+      (sum, q) => sum + (q.score || 0),
       0
     );
 
@@ -178,8 +133,28 @@ Improvements:
   }
 };
 
+const getQuizzes = async (req, res) => {
+  try {
+    // If a userId is passed in params, use it, otherwise use JWT user
+    const userId = req.params.userId && req.params.userId !== "USER_ID" ? req.params.userId : req.user._id;
+    
+    const quizzes = await Quiz.find({ user: userId }).sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      message: "Quizzes fetched successfully",
+      count: quizzes.length,
+      quizzes
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   generateQuiz,
   updatePerformance,
-  evaluateAnswer
+  evaluateAnswer,
+  getQuizzes
 };

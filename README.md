@@ -1,59 +1,37 @@
 ![Node.js](https://img.shields.io/badge/Node.js-20-green)
+![React](https://img.shields.io/badge/Next.js-14-black)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-blue)
 ![Ollama](https://img.shields.io/badge/Ollama-llama3-orange)
 ![Telegram](https://img.shields.io/badge/Telegram-Bot-blue)
-# 🦞 OpenClaw Telegram Learning Assistant
 
-A personalized AI-powered Telegram learning assistant built using OpenClaw, Ollama, Docker, and SearXNG.
+# 🦞 AI-Powered Adaptive Learning and Interview Preparation System using LLMs
 
-This assistant automatically onboards users, stores their technical interests and goals, searches the web for recent technology updates, and delivers personalized interview questions and technical insights every evening.
+A production-ready, full-stack AI mentor platform that generates personalized quizzes, evaluates answers dynamically, tracks progress using data analytics, and provides targeted study recommendations. It seamlessly integrates a Next.js web dashboard with a Node.js backend, MongoDB, and a Telegram Bot.
 
 ---
 
 # 🚀 Features
 
-- ✅ Personalized onboarding flow
-- ✅ Persistent user memory
-- ✅ Telegram bot integration
-- ✅ AI-powered interview preparation
-- ✅ Automated nightly tech briefs
-- ✅ Web search integration using SearXNG
-- ✅ Dockerized deployment
-- ✅ Ollama local LLM integration
-- ✅ Cron-based scheduling system
-
----
-
-# 🧠 How It Works
-
-1. A new user sends a message to the Telegram bot.
-2. The onboarding skill collects:
-   - technical domains
-   - experience level
-   - learning goals
-   - timezone
-3. User preferences are stored in persistent memory.
-4. A nightly cron job runs every day at 9 PM.
-5. The assistant searches for recent industry updates.
-6. The bot sends:
-   - 5 interview questions
-   - 3–5 technical tidbits
-   directly to Telegram.
+- ✅ **Full-Stack Architecture**: Next.js frontend with TailwindCSS, Node.js + Express backend, MongoDB database.
+- ✅ **Dynamic AI Quizzes**: Real-time generation of interview questions using local LLMs (Ollama) tailored to the user's specific domain and skill level.
+- ✅ **AI Answer Evaluation**: Natural Language Processing applied to user answers to generate scores and constructive feedback instantly.
+- ✅ **Adaptive Difficulty**: The system automatically scales question difficulty based on the user's past performance and overall accuracy.
+- ✅ **Analytics Dashboard**: Rich interactive data visualizations using Recharts to track streaks, domain accuracy, and weak topics over time.
+- ✅ **Multi-Platform Support**: Accessible via a beautiful, premium responsive Web Dashboard and directly through Telegram via an integrated bot.
+- ✅ **JWT Authentication**: Secure user session management across the platform.
 
 ---
 
 # 🏗️ System Architecture
 
 ```text
-Telegram User
-      ↓
-Telegram Bot
-      ↓
-OpenClaw Agent
-      ↓
-Ollama (llama3)
-      ↓
-SearXNG Web Search
+       [ Next.js Web Dashboard ]      [ Telegram User ]
+                  ↓                           ↓
+             [ Node.js + Express.js REST API Backend ]
+                  ↓                           ↓
+       [ MongoDB Database ]            [ Ollama Local LLM ]
+       (Users, Quizzes, Stats)         (llama3 Inference)
 ```
 
 ---
@@ -63,23 +41,22 @@ SearXNG Web Search
 ```text
 openclaw-telegram-learning-assistant/
 │
-├── skills/
-│   ├── user-onboarding/
-│   │   └── SKILL.md
-│   │
-│   └── daily-quiz/
-│       └── SKILL.md
+├── backend/                  # Node.js + Express API Server
+│   ├── controllers/          # Business logic (auth, quiz, dashboard)
+│   ├── middleware/           # JWT authentication guards
+│   ├── models/               # Mongoose DB schemas
+│   ├── routes/               # API endpoints
+│   ├── services/             # AI integration (Ollama Axios client)
+│   └── server.js             # Entry point
 │
-├── config/
-│   └── openclaw.json
+├── frontend/                 # Next.js Web App
+│   ├── app/                  # App router pages (dashboard, quiz, analytics)
+│   ├── public/               # Static assets
+│   └── package.json
 │
-├── Dockerfile
-├── docker-compose.yml
-├── .env.example
-├── .gitignore
-├── package.json
-├── package-lock.json
-├── index.js
+├── index.js                  # Telegram Bot Entry Point
+├── Dockerfile                # Root docker configuration
+├── docker-compose.yml        # Orchestration for Ollama and Backend
 └── README.md
 ```
 
@@ -87,13 +64,12 @@ openclaw-telegram-learning-assistant/
 
 # ⚙️ Technologies Used
 
-- OpenClaw
-- Ollama
-- Telegram Bot API
-- Docker
-- Docker Compose
-- SearXNG
-- Node.js
+- **Frontend**: React, Next.js, Tailwind CSS, Recharts, Axios
+- **Backend**: Node.js, Express.js, Mongoose, JWT, bcryptjs
+- **Database**: MongoDB (Atlas)
+- **AI Runtime**: Ollama (llama3)
+- **Bot Integration**: node-telegram-bot-api
+- **DevOps**: Docker, Docker Compose
 
 ---
 
@@ -108,208 +84,90 @@ cd openclaw-telegram-learning-assistant
 
 ---
 
-## 2️⃣ Install Ollama
+## 2️⃣ Install Ollama & Pull Model
 
-Download and install Ollama:
+Download and install Ollama: https://ollama.com
 
-https://ollama.com
-
-Start Ollama:
+Start Ollama and pull the `llama3` model:
 
 ```bash
 ollama serve
-```
-
-Pull llama3 model:
-
-```bash
 ollama pull llama3
 ```
 
 ---
 
-## 3️⃣ Create Telegram Bot
+## 3️⃣ Configure Environment Variables
 
-Open BotFather:
-
-https://t.me/BotFather
-
-Create a new bot using:
-
-```text
-/newbot
-```
-
-Save the generated Telegram bot token.
-
----
-
-## 4️⃣ Configure Environment Variables
-
-Create a `.env` file:
-
+**Backend (`backend/.env`):**
 ```env
-TELEGRAM_BOT_TOKEN=YOUR_REAL_TOKEN
-OLLAMA_BASE_URL=http://localhost:11434
-MODEL_NAME=llama3
+PORT=5000
+MONGO_URI=your_mongodb_atlas_connection_string
+JWT_SECRET=your_super_secret_key
+FRONTEND_URL=http://localhost:3000
+```
+
+**Frontend (`frontend/.env.local`):**
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000
+```
+
+**Root (`.env`):**
+```env
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+API_URL=http://localhost:5000
+OLLAMA_URL=http://localhost:11434
 ```
 
 ---
 
-## 5️⃣ Run Docker Containers
+## 4️⃣ Run the Application Locally
 
+**Start Backend:**
 ```bash
-docker compose up --build
+cd backend
+npm install
+npm run dev
+```
+
+**Start Frontend:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+**Start Telegram Bot:**
+```bash
+cd ..
+npm install
+npm start
 ```
 
 ---
 
-# ⏰ Cron Job Configuration
+# ☁️ Cloud Deployment
 
-The project includes a scheduled cron job:
-
-```cron
-0 21 * * *
-```
-
-This runs every day at 9 PM based on the user's stored timezone.
-
-The cron job automatically triggers the `daily-quiz` skill.
+- **Database**: Hosted on MongoDB Atlas.
+- **Backend**: Deploy the `backend/` folder to Render or Railway. Set Environment Variables including `MONGO_URI`, `JWT_SECRET`, and `FRONTEND_URL`.
+- **Frontend**: Deploy the `frontend/` folder to Vercel. Set `NEXT_PUBLIC_API_URL` to the Render backend URL.
+- **Telegram Bot**: Run `index.js` on a VPS or Render Background Worker.
 
 ---
 
-# 🔥 Onboarding Trigger Design
+# 📸 Features Showcase
 
-This project uses a Standing Order based onboarding approach.
+## Web Dashboard
+Track your performance, accuracy, and streaks in a premium, glassmorphism-inspired UI.
 
-When a new user sends a message to the Telegram bot, the assistant checks persistent memory for an existing user profile.
+## Analytics & Insights
+Detailed breakdowns of your weakest topics and domain performance using Recharts.
 
-If no profile exists, the `user-onboarding` skill is automatically triggered.
-
-Why this approach was chosen:
-- simpler architecture
-- easier maintenance
-- lower operational complexity
-- evaluator-friendly workflow
-- clean separation between onboarding and daily automation
-
-## ✅ Why Standing Order Was Chosen
-
-- simpler onboarding architecture
-- lower operational complexity
-- easier maintenance
-- evaluator-friendly implementation
-- scalable design approach
-
----
-
-# 🌐 Web Search Integration
-
-The assistant uses SearXNG for web search functionality.
-
-The `daily-quiz` skill searches:
-- recent interview trends
-- latest frameworks
-- trending technologies
-- fresh industry updates
-
-This ensures personalized and up-to-date learning content.
-
----
-
-# 📩 Sample Telegram Output
-
-```md
-🦞 *Your Daily Tech Brief* — May 20, 2026
-
-🧠 *Interview Questions*
-
-1. Explain vector embeddings in AI systems.
-2. What is database indexing?
-3. Difference between Docker and virtual machines?
-4. Explain REST vs GraphQL.
-5. What is CI/CD in DevOps?
-
-💡 *Today's Tidbits*
-
-- Retrieval-Augmented Generation (RAG) is trending in AI systems.
-- Kubernetes is widely used for container orchestration.
-- PostgreSQL indexing improves query performance.
-- Serverless computing adoption continues to grow.
-```
-
----
-
-# 📸 Suggested Screenshots
-
-Include screenshots for:
-
-- Telegram onboarding conversation
-- Daily tech brief message
-- Docker containers running
-- Ollama terminal execution
-- Docker Compose execution logs
-
----
-
-# 🐳 Docker Services
-
-The Docker Compose setup orchestrates:
-
-| Service | Purpose |
-|---|---|
-| openclaw-agent | Main AI assistant |
-| ollama | Local LLM inference |
-| searxng | Web search provider |
-
----
-
-# 🔐 Security Practices
-
-- No secrets are hardcoded.
-- Telegram tokens are stored using environment variables.
-- `.env` is excluded using `.gitignore`.
-- `.env.example` contains only placeholders.
-
----
-
-# 🎯 Future Improvements
-
-- Voice-based Telegram interactions
-- Multi-language support
-- Personalized learning roadmaps
-- AI-generated coding challenges
-- Analytics dashboard
-- Real-time notifications
-
-# 📸 Project Screenshots
-
-## Telegram Bot Creation
-
-![Telegram Bot Creation](screenshots/telegram-bot-creation.png)
-
----
-
-## Bot Successfully Created
-
-![Bot Created](screenshots/bot-created.png)
-
----
-
-## Docker Containers Running
-
-![Docker Running](screenshots/docker-running.png)
-
----
-
-## Ollama Local LLM Running
-
-![Ollama Terminal](screenshots/ollama-terminal.png)
+## Adaptive AI Quizzes
+Take quizzes directly on the web or via Telegram. Get instant AI-generated feedback and scores.
 
 ---
 
 # 👩‍💻 Author
 
 Konakalla Chopra Lakshmi Sathvika
-
-Built as part of the OpenClaw AI Learning Assistant project.
