@@ -54,7 +54,16 @@ async function ensureUserAuth(chatId) {
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   userStates[chatId] = { step: "idle" };
-  bot.sendMessage(chatId, "Welcome to the AI Mentor Platform! 🚀\n\nSend /quiz to start an adaptive learning quiz.\nSend /stats to view your performance.\nSend /recommend to get study recommendations.");
+  bot.sendMessage(
+    chatId,
+    "Welcome to the AI Mentor Platform! 🚀\n\n" +
+      "/quiz — adaptive interview quiz\n" +
+      "/stats — performance dashboard\n" +
+      "/recommend — AI study recommendations\n" +
+      "/studyplan — personalized weekly plan\n" +
+      "/resume — paste resume for AI review\n" +
+      "/challenges — coding practice problems"
+  );
 });
 
 bot.onText(/\/stats/, async (msg) => {
@@ -76,6 +85,87 @@ bot.onText(/\/stats/, async (msg) => {
   }
 });
 
+bot.onText(/\/recommend/, async (msg) => {
+  const chatId = msg.chat.id;
+  const token = await ensureUserAuth(chatId);
+  if (!token) return bot.sendMessage(chatId, "Backend error.");
+  bot.sendMessage(chatId, "Generating AI recommendations...");
+  try {
+    const res = await axios.post(
+      `${API_URL}/api/recommendation/generate`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const recs = res.data.recommendation?.recommendations || [];
+    bot.sendMessage(
+      chatId,
+      `📚 **Recommendations**\n\n${recs.map((r, i) => `${i + 1}. ${r}`).join("\n")}`,
+      { parse_mode: "Markdown" }
+    );
+  } catch {
+    bot.sendMessage(chatId, "Failed to generate recommendations.");
+  }
+});
+
+bot.onText(/\/studyplan/, async (msg) => {
+  const chatId = msg.chat.id;
+  const token = await ensureUserAuth(chatId);
+  if (!token) return bot.sendMessage(chatId, "Backend error.");
+  bot.sendMessage(chatId, "Building your AI study plan...");
+  try {
+    const res = await axios.post(
+      `${API_URL}/api/advanced/study-plan`,
+      { weeks: 4 },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const plan = res.data.plan;
+    const weeks = (plan.weeks || [])
+      .slice(0, 2)
+      .map(
+        (w) =>
+          `*Week ${w.week}:* ${w.focus}\n${(w.tasks || []).slice(0, 2).map((t) => `• ${t}`).join("\n")}`
+      )
+      .join("\n\n");
+    bot.sendMessage(
+      chatId,
+      `📚 **Study Plan**\n\n${plan.summary}\n\n${weeks}\n\n_(Full plan on web dashboard)_`,
+      { parse_mode: "Markdown" }
+    );
+  } catch {
+    bot.sendMessage(chatId, "Failed to generate study plan.");
+  }
+});
+
+bot.onText(/\/challenges/, async (msg) => {
+  const chatId = msg.chat.id;
+  const token = await ensureUserAuth(chatId);
+  if (!token) return bot.sendMessage(chatId, "Backend error.");
+  try {
+    const res = await axios.post(
+      `${API_URL}/api/advanced/coding-challenges`,
+      { language: "JavaScript" },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const list = (res.data.challenges || [])
+      .map((c, i) => `${i + 1}. *${c.title}* (${c.difficulty})\n${c.description}`)
+      .join("\n\n");
+    bot.sendMessage(chatId, `💻 **Coding Challenges**\n\n${list}`, {
+      parse_mode: "Markdown"
+    });
+  } catch {
+    bot.sendMessage(chatId, "Failed to generate challenges.");
+  }
+});
+
+bot.onText(/\/resume/, (msg) => {
+  const chatId = msg.chat.id;
+  userStates[chatId] = { step: "waiting_resume" };
+  bot.sendMessage(
+    chatId,
+    "Paste your resume text in the next message (min 50 characters). Optionally add target role on the first line: `Role: Backend Developer`"
+  );
+});
+
 bot.onText(/\/quiz/, (msg) => {
   const chatId = msg.chat.id;
   userStates[chatId] = { step: "waiting_domain" };
@@ -90,6 +180,36 @@ bot.on("message", async (msg) => {
   if (!text || text.startsWith("/")) return;
 
   const state = userStates[chatId] || { step: "idle" };
+
+  if (state.step === "waiting_resume") {
+    const token = await ensureUserAuth(chatId);
+    if (!token) return bot.sendMessage(chatId, "Backend error.");
+    let targetRole = "";
+    let resumeText = text;
+    if (text.toLowerCase().startsWith("role:")) {
+      const lines = text.split("\n");
+      targetRole = lines[0].replace(/^role:\s*/i, "").trim();
+      resumeText = lines.slice(1).join("\n").trim();
+    }
+    bot.sendMessage(chatId, "Analyzing resume with AI...");
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/advanced/resume`,
+        { resumeText, targetRole },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const a = res.data.analysis;
+      bot.sendMessage(
+        chatId,
+        `📄 **Resume Score:** ${a.overall_score}/100\n\n**Strengths:** ${(a.strengths || []).slice(0, 2).join("; ")}\n\n**Improve:** ${(a.improvements || []).slice(0, 2).join("; ")}`,
+        { parse_mode: "Markdown" }
+      );
+    } catch {
+      bot.sendMessage(chatId, "Resume analysis failed. Ensure text is at least 50 characters.");
+    }
+    userStates[chatId].step = "idle";
+    return;
+  }
 
   if (state.step === "waiting_domain") {
     bot.sendMessage(chatId, `Generating an AI quiz for *${text}*... Please wait.`, { parse_mode: "Markdown" });

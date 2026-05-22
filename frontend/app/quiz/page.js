@@ -16,6 +16,33 @@ export default function QuizPage() {
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState(null);
   const [evaluating, setEvaluating] = useState(false);
+  const [listening, setListening] = useState(false);
+
+  const speakQuestion = () => {
+    if (!quizData?.questions?.[currentQuestionIndex]?.question) return;
+    const utterance = new SpeechSynthesisUtterance(
+      quizData.questions[currentQuestionIndex].question
+    );
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const startVoiceInput = () => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice input is not supported in this browser. Use Chrome or Edge.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.onstart = () => setListening(true);
+    recognition.onend = () => setListening(false);
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setAnswer((prev) => (prev ? `${prev} ${transcript}` : transcript));
+    };
+    recognition.start();
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -117,6 +144,22 @@ export default function QuizPage() {
 
         <div className="bg-white/10 p-8 rounded-3xl border border-white/10 shadow-2xl">
           <h2 className="text-2xl mb-6 font-medium">{currentQuestion?.question}</h2>
+          <div className="flex gap-3 mb-4">
+            <button
+              type="button"
+              onClick={speakQuestion}
+              className="text-sm bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20"
+            >
+              🔊 Listen (Voice Assistant)
+            </button>
+            <button
+              type="button"
+              onClick={startVoiceInput}
+              className="text-sm bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20"
+            >
+              {listening ? "🎤 Listening..." : "🎤 Voice Answer"}
+            </button>
+          </div>
 
           {!feedback ? (
             <>

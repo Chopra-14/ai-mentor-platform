@@ -7,14 +7,15 @@ import {
   FaUserGraduate,
   FaBook
 } from "react-icons/fa";
-import Link from "next/link";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import AppSidebar from "../../components/AppSidebar";
 
 export default function Dashboard() {
   const router = useRouter();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -29,6 +30,7 @@ export default function Dashboard() {
           headers: { Authorization: `Bearer ${token}` }
         });
         setStats(res.data);
+        setShowAdmin(!!res.data.isAdmin);
       } catch (err) {
         console.error("Failed to load dashboard stats", err);
         if (err.response?.status === 401) {
@@ -49,22 +51,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white flex flex-col md:flex-row">
-      {/* Sidebar */}
-      <div className="w-full md:w-64 bg-white/10 backdrop-blur-lg border-b md:border-b-0 md:border-r border-white/10 p-6">
-        <h1 className="text-3xl font-bold mb-10 text-cyan-400">AI Mentor</h1>
-        <div className="space-y-5 text-lg">
-          <Link href="/dashboard" className="block text-cyan-400 transition">Dashboard</Link>
-          <Link href="/quiz" className="block hover:text-cyan-400 transition">Quiz</Link>
-          <Link href="/analytics" className="block hover:text-cyan-400 transition">Analytics</Link>
-          <Link href="/profile" className="block hover:text-cyan-400 transition">Profile</Link>
-          <button 
-            onClick={() => { localStorage.removeItem("token"); router.push("/login"); }}
-            className="block w-full text-left text-red-400 hover:text-red-300 transition mt-10"
-          >
-            Logout
-          </button>
-        </div>
-      </div>
+      <AppSidebar showAdmin={showAdmin} />
 
       {/* Main Content */}
       <div className="flex-1 p-4 md:p-10 overflow-y-auto">

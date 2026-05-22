@@ -24,6 +24,10 @@ const signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const isAdmin =
+      process.env.ADMIN_EMAIL &&
+      email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase();
+
     const user = await User.create({
       name,
       email,
@@ -31,7 +35,8 @@ const signup = async (req, res) => {
       domains,
       level,
       goals,
-      timezone
+      timezone,
+      role: isAdmin ? "admin" : "user"
     });
 
     res.status(201).json({
@@ -43,7 +48,9 @@ const signup = async (req, res) => {
     domains: user.domains,
     level: user.level,
     goals: user.goals,
-    timezone: user.timezone
+    timezone: user.timezone,
+    role: user.role,
+    preferred_language: user.preferred_language
   }
 });
 
@@ -97,7 +104,9 @@ const login = async (req, res) => {
     domains: user.domains,
     level: user.level,
     goals: user.goals,
-    timezone: user.timezone
+    timezone: user.timezone,
+    role: user.role,
+    preferred_language: user.preferred_language
   }
 });
 

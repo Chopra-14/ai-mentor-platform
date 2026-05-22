@@ -33,10 +33,9 @@ router.post("/generate", protect, async (req, res) => {
         recommendations
       });
 
-    await sendRecommendationEmail(
-      user.email,
-      weakTopic
-    );
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      await sendRecommendationEmail(user.email, weakTopic);
+    }
 
     res.status(200).json({
 

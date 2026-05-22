@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const Quiz = require("../models/Quiz");
+const { calculateStreak } = require("../utils/streakUtils");
 
 const getDashboardStats = async (req, res) => {
   try {
@@ -54,15 +55,22 @@ const getDashboardStats = async (req, res) => {
       await user.save();
     }
 
-    // Calculate mock streak
-    const streak = Math.floor(Math.random() * 10) + 1; // Simplified streak logic for now
+    const completedQuizzes = quizzes.filter((q) =>
+      q.questions.every((question) => question.user_answer)
+    );
+    const activityDates = completedQuizzes.map((q) => q.updatedAt || q.createdAt);
+    const streak = calculateStreak(activityDates);
 
     res.status(200).json({
       overallAccuracy: overallAccuracy.toFixed(2),
       weakestTopic,
       streak,
       domainStats,
-      recentQuizzes: quizzes.slice(0, 5) // Last 5 quizzes
+      totalQuizzes: quizzes.length,
+      recentQuizzes: quizzes.slice(0, 5),
+      isAdmin:
+        user.role === "admin" ||
+        (process.env.ADMIN_EMAIL && user.email === process.env.ADMIN_EMAIL)
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

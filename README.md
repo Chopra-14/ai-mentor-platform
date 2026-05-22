@@ -20,6 +20,9 @@ A production-ready, full-stack AI mentor platform that generates personalized qu
 - ✅ **Analytics Dashboard**: Rich interactive data visualizations using Recharts to track streaks, domain accuracy, and weak topics over time.
 - ✅ **Multi-Platform Support**: Accessible via a beautiful, premium responsive Web Dashboard and directly through Telegram via an integrated bot.
 - ✅ **JWT Authentication**: Secure user session management across the platform.
+- ✅ **Admin Panel**: Monitor users, quizzes, signups, and platform-wide accuracy.
+- ✅ **Advanced AI**: Study plans, resume analysis, coding challenges, multilingual responses.
+- ✅ **Voice Assistant**: Text-to-speech questions and speech-to-text answers on the quiz page.
 
 ---
 
@@ -105,6 +108,11 @@ PORT=5000
 MONGO_URI=your_mongodb_atlas_connection_string
 JWT_SECRET=your_super_secret_key
 FRONTEND_URL=http://localhost:3000
+ADMIN_EMAIL=your_admin@email.com
+OLLAMA_URL=http://localhost:11434
+MODEL_NAME=llama3
+EMAIL_USER=
+EMAIL_PASS=
 ```
 
 **Frontend (`frontend/.env.local`):**
@@ -153,6 +161,42 @@ npm start
 - **Frontend**: Deploy the `frontend/` folder to Vercel. Set `NEXT_PUBLIC_API_URL` to the Render backend URL.
 - **Telegram Bot**: Run `index.js` on a VPS or Render Background Worker.
 
+**Docker (full stack):**
+```bash
+cp .env.example .env
+cp .env.example backend/.env   # edit MONGO_URI, JWT_SECRET, ADMIN_EMAIL
+docker compose up -d mongodb ollama backend frontend telegram-bot
+```
+
+---
+
+# 🛡️ Admin Panel (Phase 10)
+
+1. Set `ADMIN_EMAIL` in `backend/.env` to your login email.
+2. Sign up on the web app with that email (first signup gets `role: admin`).
+3. Open **Admin Panel** from the sidebar or visit `/admin`.
+
+**Admin API:** `GET /api/admin/overview` — requires JWT + admin role.
+
+---
+
+# 🚀 Advanced AI Features (Phase 11)
+
+| Feature | Web Route | Telegram Command |
+|---------|-----------|------------------|
+| Study plan | `/study-plan` | `/studyplan` |
+| Resume analyzer | `/resume` | `/resume` then paste text |
+| Coding challenges | `/challenges` | `/challenges` |
+| Multilingual | Profile → language buttons | Uses profile setting |
+| Voice quiz | Quiz page → Listen / Voice Answer | — |
+
+**APIs:**
+- `POST /api/advanced/study-plan` — body: `{ "weeks": 4 }`
+- `POST /api/advanced/resume` — body: `{ "resumeText", "targetRole" }`
+- `POST /api/advanced/coding-challenges` — body: `{ "language", "difficulty" }`
+
+See [ROADMAP.md](./ROADMAP.md) for full phase completion checklist.
+
 ---
 
 # 📸 Features Showcase
@@ -165,6 +209,15 @@ Detailed breakdowns of your weakest topics and domain performance using Recharts
 
 ## Adaptive AI Quizzes
 Take quizzes directly on the web or via Telegram. Get instant AI-generated feedback and scores.
+
+## Admin & Advanced AI
+Platform analytics for admins; study plans, resume scoring, and coding challenges for learners.
+
+---
+
+# 🏆 Resume Project Title
+
+**AI-Powered Adaptive Learning and Interview Preparation System using LLMs**
 
 ---
 

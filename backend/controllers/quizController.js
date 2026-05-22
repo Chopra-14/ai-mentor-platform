@@ -115,14 +115,31 @@ const evaluateAnswer = async (req, res) => {
       0
     );
 
-    const average_score =
-      totalScore / quiz.questions.length;
+    const average_score = totalScore / quiz.questions.length;
+    const allAnswered = quiz.questions.every((q) => q.user_answer);
+
+    if (allAnswered && req.user) {
+      const user = await User.findById(req.user._id);
+      if (user) {
+        let difficulty_level = "Beginner";
+        if (average_score >= 8) difficulty_level = "Advanced";
+        else if (average_score >= 5) difficulty_level = "Intermediate";
+
+        user.average_score = average_score * 10;
+        user.difficulty_level = difficulty_level;
+        if (quiz.domain && !user.weak_topics.includes(quiz.domain) && average_score < 6) {
+          user.weak_topics = [quiz.domain, ...user.weak_topics].slice(0, 5);
+        }
+        await user.save();
+      }
+    }
 
     res.status(200).json({
       message: "Answer evaluated successfully",
       score: evaluation.score,
       feedback: evaluation.feedback,
-      average_score
+      average_score,
+      quizComplete: allAnswered
     });
 
   } catch (error) {

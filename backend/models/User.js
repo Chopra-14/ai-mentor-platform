@@ -51,6 +51,17 @@ weak_topics: {
     timezone: {
       type: String,
       default: "Asia/Kolkata"
+    },
+
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user"
+    },
+
+    preferred_language: {
+      type: String,
+      default: "en"
     }
   },
   {
