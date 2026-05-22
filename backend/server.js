@@ -15,8 +15,6 @@ const adminRoutes = require("./routes/adminRoutes");
 const advancedRoutes = require("./routes/advancedRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 
-connectDB();
-
 const app = express();
 
 app.use(
@@ -43,6 +41,8 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 });
