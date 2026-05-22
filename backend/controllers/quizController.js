@@ -32,7 +32,6 @@ const generateQuiz = async (req, res) => {
     res.status(200).json({
       message: "Quiz generated successfully",
       difficulty,
-      ai_prompt: prompt,
       quiz
     });
 
@@ -121,8 +120,8 @@ const evaluateAnswer = async (req, res) => {
 
     res.status(200).json({
       message: "Answer evaluated successfully",
-      score,
-      feedback,
+      score: evaluation.score,
+      feedback: evaluation.feedback,
       average_score
     });
 
