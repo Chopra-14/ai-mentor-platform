@@ -19,6 +19,8 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const advancedRoutes = require("./routes/advancedRoutes");
 const profileRoutes = require("./routes/profileRoutes");
+const studyPlanRoutes =
+require("./routes/studyPlanRoutes");
 
 const app = express();
 
@@ -51,6 +53,10 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/advanced", advancedRoutes);
 app.use("/api/profile", profileRoutes);
+app.use(
+  "/api/studyplan",
+  studyPlanRoutes
+);
 
 app.get("/", (req, res) => {
   res.send("AI Learning Assistant Backend Running");
