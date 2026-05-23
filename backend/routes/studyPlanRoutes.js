@@ -10,67 +10,67 @@ router.post("/generate", async (req, res) => {
 
     const weeklyPlans = [
 
-  {
-    focus: "React Fundamentals",
+      {
+        focus: "React Fundamentals",
 
-    tasks: [
-      "Learn JSX",
-      "Understand Components",
-      "Practice Props"
-    ],
+        tasks: [
+          "Learn JSX",
+          "Understand Components",
+          "Practice Props"
+        ],
 
-    resources: [
-      "React Docs",
-      "FreeCodeCamp"
-    ]
-  },
+        resources: [
+          "React Docs",
+          "FreeCodeCamp"
+        ]
+      },
 
-  {
-    focus: "Component Architecture",
+      {
+        focus: "Component Architecture",
 
-    tasks: [
-      "Reusable components",
-      "Folder structure",
-      "Props drilling"
-    ],
+        tasks: [
+          "Reusable components",
+          "Folder structure",
+          "Props drilling"
+        ],
 
-    resources: [
-      "Frontend Masters",
-      "YouTube"
-    ]
-  },
+        resources: [
+          "Frontend Masters",
+          "YouTube"
+        ]
+      },
 
-  {
-    focus: "State Management",
+      {
+        focus: "State Management",
 
-    tasks: [
-      "Learn useState",
-      "Learn useEffect",
-      "Manage application state"
-    ],
+        tasks: [
+          "Learn useState",
+          "Learn useEffect",
+          "Manage application state"
+        ],
 
-    resources: [
-      "React Docs",
-      "Redux Toolkit Docs"
-    ]
-  },
+        resources: [
+          "React Docs",
+          "Redux Toolkit Docs"
+        ]
+      },
 
-  {
-    focus: "API Integration",
+      {
+        focus: "API Integration",
 
-    tasks: [
-      "Fetch APIs",
-      "Axios integration",
-      "Error handling"
-    ],
+        tasks: [
+          "Fetch APIs",
+          "Axios integration",
+          "Error handling"
+        ],
 
-    resources: [
-      "MDN",
-      "Axios Docs"
-    ]
-  }
+        resources: [
+          "MDN",
+          "Axios Docs"
+        ]
+      }
 
-];
+    ];
 
     const plan = [];
 
@@ -79,13 +79,14 @@ router.post("/generate", async (req, res) => {
       const current =
         weeklyPlans[i % weeklyPlans.length];
 
-    plan.push({
-  week: i + 1,
-  domain,
-  focus: current.focus,
-  tasks: current.tasks,
-  resources: current.resources
-});
+      plan.push({
+        week: i + 1,
+        domain,
+        focus: current.focus,
+        tasks: current.tasks,
+        resources: current.resources
+      });
+
     }
 
     res.json({
