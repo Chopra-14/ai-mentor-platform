@@ -38,7 +38,7 @@ export default function StudyPlanPage() {
       summary: `A ${weeks}-week plan focused on React.`,
       weeks: res.data.plan.map((item) => ({
         week: item.week,
-        focus: item.domain,
+        focus: item.focus,
         tasks: item.tasks,
         resources: item.resources
       }))
