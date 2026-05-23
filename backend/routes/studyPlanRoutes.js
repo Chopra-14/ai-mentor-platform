@@ -79,7 +79,7 @@ router.post("/generate", async (req, res) => {
       const current =
         weeklyPlans[i % weeklyPlans.length];
 
-      plan.push({
+    plan.push({
   week: i + 1,
   domain,
   focus: current.focus,
