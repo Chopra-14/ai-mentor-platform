@@ -9,58 +9,68 @@ router.post("/generate", async (req, res) => {
     const { weeks, domain } = req.body;
 
     const weeklyPlans = [
-      {
-        tasks: [
-          "Learn basics",
-          "Read documentation",
-          "Setup environment"
-        ],
 
-        resources: [
-          "Official docs",
-          "YouTube tutorials"
-        ]
-      },
+  {
+    focus: "React Fundamentals",
 
-      {
-        tasks: [
-          "Solve beginner problems",
-          "Practice quiz",
-          "Build mini project"
-        ],
+    tasks: [
+      "Learn JSX",
+      "Understand Components",
+      "Practice Props"
+    ],
 
-        resources: [
-          "LeetCode",
-          "GeeksforGeeks"
-        ]
-      },
+    resources: [
+      "React Docs",
+      "FreeCodeCamp"
+    ]
+  },
 
-      {
-        tasks: [
-          "Learn advanced concepts",
-          "Debug applications",
-          "Build APIs"
-        ],
+  {
+    focus: "Component Architecture",
 
-        resources: [
-          "MDN Docs",
-          "FreeCodeCamp"
-        ]
-      },
+    tasks: [
+      "Reusable components",
+      "Folder structure",
+      "Props drilling"
+    ],
 
-      {
-        tasks: [
-          "Authentication",
-          "JWT practice",
-          "Deploy project"
-        ],
+    resources: [
+      "Frontend Masters",
+      "YouTube"
+    ]
+  },
 
-        resources: [
-          "Render Docs",
-          "Vercel Docs"
-        ]
-      }
-    ];
+  {
+    focus: "State Management",
+
+    tasks: [
+      "Learn useState",
+      "Learn useEffect",
+      "Manage application state"
+    ],
+
+    resources: [
+      "React Docs",
+      "Redux Toolkit Docs"
+    ]
+  },
+
+  {
+    focus: "API Integration",
+
+    tasks: [
+      "Fetch APIs",
+      "Axios integration",
+      "Error handling"
+    ],
+
+    resources: [
+      "MDN",
+      "Axios Docs"
+    ]
+  }
+
+];
 
     const plan = [];
 
@@ -70,11 +80,12 @@ router.post("/generate", async (req, res) => {
         weeklyPlans[i % weeklyPlans.length];
 
       plan.push({
-        week: i + 1,
-        domain,
-        tasks: current.tasks,
-        resources: current.resources
-      });
+  week: i + 1,
+  domain,
+  focus: current.focus,
+  tasks: current.tasks,
+  resources: current.resources
+});
     }
 
     res.json({
