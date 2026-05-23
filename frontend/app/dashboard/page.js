@@ -7,9 +7,9 @@ import {
   FaUserGraduate,
   FaBook
 } from "react-icons/fa";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import AppSidebar from "../../components/AppSidebar";
+import api, { authHeaders, getErrorMessage } from "../../lib/api";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -26,13 +26,13 @@ export default function Dashboard() {
 
     const fetchStats = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/stats`, {
-          headers: { Authorization: `Bearer ${token}` }
+        const res = await api.get("/api/dashboard/stats", {
+          headers: authHeaders()
         });
         setStats(res.data);
         setShowAdmin(!!res.data.isAdmin);
       } catch (err) {
-        console.error("Failed to load dashboard stats", err);
+        console.error("Failed to load dashboard stats", getErrorMessage(err));
         if (err.response?.status === 401) {
           localStorage.removeItem("token");
           router.push("/login");

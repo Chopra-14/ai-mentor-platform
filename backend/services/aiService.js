@@ -3,6 +3,9 @@ const MODEL_NAME = process.env.MODEL_NAME || "llama3"; // user needs to pull thi
 
 const generateAIResponse = async (prompt) => {
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 90000);
+
     const response = await fetch(`${OLLAMA_URL}/api/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -10,8 +13,10 @@ const generateAIResponse = async (prompt) => {
         model: MODEL_NAME,
         prompt: prompt,
         stream: false
-      })
+      }),
+      signal: controller.signal
     });
+    clearTimeout(timeout);
 
     if (!response.ok) {
       throw new Error(`Ollama API error: ${response.statusText}`);

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import AppSidebar from "../../components/AppSidebar";
+import api, { authHeaders, getErrorMessage } from "../../lib/api";
 
 export default function StudyPlanPage() {
   const router = useRouter();
@@ -17,14 +17,14 @@ export default function StudyPlanPage() {
 
     setLoading(true);
     try {
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/advanced/study-plan`,
+      const res = await api.post(
+        "/api/advanced/study-plan",
         { weeks },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: authHeaders() }
       );
       setPlan(res.data.plan);
     } catch {
-      alert("Failed to generate study plan.");
+      alert(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

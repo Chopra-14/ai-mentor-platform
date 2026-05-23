@@ -2,6 +2,11 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
+if (!process.env.JWT_SECRET) {
+  console.error("JWT_SECRET is missing in backend/.env");
+  process.exit(1);
+}
+
 const express = require("express");
 const cors = require("cors");
 
@@ -17,9 +22,21 @@ const profileRoutes = require("./routes/profileRoutes");
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     credentials: true
   })
 );
@@ -37,6 +54,13 @@ app.use("/api/profile", profileRoutes);
 
 app.get("/", (req, res) => {
   res.send("AI Learning Assistant Backend Running");
+});
+
+app.get("/api/health", (req, res) => {
+  res.json({
+    ok: true,
+    mongo: require("mongoose").connection.readyState === 1
+  });
 });
 
 const PORT = process.env.PORT || 5000;

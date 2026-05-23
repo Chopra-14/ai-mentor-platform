@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
+import api, { authHeaders } from "../../lib/api";
 import Link from "next/link";
 import { FaArrowLeft } from "react-icons/fa";
 import {
@@ -36,8 +36,8 @@ export default function AnalyticsPage() {
 
     const fetchStats = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/stats`, {
-          headers: { Authorization: `Bearer ${token}` }
+        const res = await api.get("/api/dashboard/stats", {
+          headers: authHeaders()
         });
         setStats(res.data);
       } catch (err) {

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaArrowLeft } from "react-icons/fa";
+import api, { authHeaders, getErrorMessage } from "../../lib/api";
 
 export default function QuizPage() {
   const router = useRouter();
@@ -55,17 +55,16 @@ export default function QuizPage() {
     if (!domain) return alert("Please enter a domain");
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/quiz/generate`,
+      const res = await api.post(
+        "/api/quiz/generate",
         { domain },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: authHeaders() }
       );
       setQuizData(res.data.quiz);
       setIsStarted(true);
     } catch (err) {
       console.error(err);
-      alert("Failed to start quiz.");
+      alert(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -75,20 +74,19 @@ export default function QuizPage() {
     if (!answer.trim()) return;
     setEvaluating(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/quiz/evaluate`,
+      const res = await api.post(
+        "/api/quiz/evaluate",
         {
           quizId: quizData._id,
           questionIndex: currentQuestionIndex,
           user_answer: answer,
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: authHeaders() }
       );
       setFeedback(res.data);
     } catch (err) {
       console.error(err);
-      alert("Failed to evaluate answer.");
+      alert(getErrorMessage(err));
     } finally {
       setEvaluating(false);
     }

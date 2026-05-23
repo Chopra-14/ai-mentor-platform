@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import AppSidebar from "../../components/AppSidebar";
+import api, { authHeaders, getErrorMessage } from "../../lib/api";
 
 const LANGUAGES = [
   { code: "en", label: "English" },
@@ -26,17 +26,13 @@ export default function ProfilePage() {
       return;
     }
 
-    axios
-      .get(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+    api
+      .get("/api/profile/me", { headers: authHeaders() })
       .then((res) => setUser(res.data.user))
       .catch(() => router.push("/login"));
 
-    axios
-      .get(`${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/stats`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+    api
+      .get("/api/dashboard/stats", { headers: authHeaders() })
       .then((res) => setShowAdmin(!!res.data.isAdmin))
       .catch(() => {});
   }, [router]);
@@ -45,14 +41,14 @@ export default function ProfilePage() {
     const token = localStorage.getItem("token");
     setSaving(true);
     try {
-      const res = await axios.patch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/profile/me`,
+      const res = await api.patch(
+        "/api/profile/me",
         { preferred_language: code },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: authHeaders() }
       );
       setUser(res.data.user);
     } catch {
-      alert("Failed to update language.");
+      alert(getErrorMessage(err));
     } finally {
       setSaving(false);
     }

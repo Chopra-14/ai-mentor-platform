@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
+import api, { authHeaders } from "../../lib/api";
 import AppSidebar from "../../components/AppSidebar";
 import {
   BarChart,
@@ -27,10 +27,8 @@ export default function AdminPage() {
       return;
     }
 
-    axios
-      .get(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/overview`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+    api
+      .get("/api/admin/overview", { headers: authHeaders() })
       .then((res) => setData(res.data))
       .catch((err) => {
         if (err.response?.status === 403) {

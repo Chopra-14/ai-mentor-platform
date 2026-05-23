@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import AppSidebar from "../../components/AppSidebar";
+import api, { authHeaders, getErrorMessage } from "../../lib/api";
 
 export default function ResumePage() {
   const router = useRouter();
@@ -21,14 +21,14 @@ export default function ResumePage() {
 
     setLoading(true);
     try {
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/advanced/resume`,
+      const res = await api.post(
+        "/api/advanced/resume",
         { resumeText, targetRole },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: authHeaders() }
       );
       setAnalysis(res.data.analysis);
     } catch {
-      alert("Resume analysis failed.");
+      alert(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

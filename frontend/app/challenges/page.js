@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import AppSidebar from "../../components/AppSidebar";
+import api, { authHeaders, getErrorMessage } from "../../lib/api";
 
 export default function ChallengesPage() {
   const router = useRouter();
@@ -18,14 +18,14 @@ export default function ChallengesPage() {
 
     setLoading(true);
     try {
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/advanced/coding-challenges`,
+      const res = await api.post(
+        "/api/advanced/coding-challenges",
         { language, difficulty: difficulty || undefined },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: authHeaders() }
       );
       setChallenges(res.data.challenges);
     } catch {
-      alert("Failed to generate challenges.");
+      alert(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

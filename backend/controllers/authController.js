@@ -14,6 +14,18 @@ const signup = async (req, res) => {
       timezone
     } = req.body;
 
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        message: "Name, email, and password are required"
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters"
+      });
+    }
+
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
@@ -39,20 +51,25 @@ const signup = async (req, res) => {
       role: isAdmin ? "admin" : "user"
     });
 
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d"
+    });
+
     res.status(201).json({
-  message: "Signup successful",
-  user: {
-    id: user._id,
-    name: user.name,
-    email: user.email,
-    domains: user.domains,
-    level: user.level,
-    goals: user.goals,
-    timezone: user.timezone,
-    role: user.role,
-    preferred_language: user.preferred_language
-  }
-});
+      message: "Signup successful",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        domains: user.domains,
+        level: user.level,
+        goals: user.goals,
+        timezone: user.timezone,
+        role: user.role,
+        preferred_language: user.preferred_language
+      }
+    });
 
   } catch (error) {
     res.status(500).json({
