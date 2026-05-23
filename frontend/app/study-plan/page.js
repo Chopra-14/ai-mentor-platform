@@ -12,24 +12,48 @@ export default function StudyPlanPage() {
   const [loading, setLoading] = useState(false);
 
   const generatePlan = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return router.push("/login");
 
-    setLoading(true);
-    try {
-      const res = await api.post(
-        "/api/advanced/study-plan",
-        { weeks },
-        { headers: authHeaders() }
-      );
-      setPlan(res.data.plan);
-    } catch {
-      alert(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const token = localStorage.getItem("token");
 
+  if (!token) {
+    return router.push("/login");
+  }
+
+  setLoading(true);
+
+  try {
+
+    const res = await api.post(
+      "/api/studyplan/generate",
+      {
+        weeks,
+        domain: "React"
+      },
+      {
+        headers: authHeaders()
+      }
+    );
+
+    setPlan({
+      summary: `A ${weeks}-week plan focused on React.`,
+      weeks: res.data.plan.map((item) => ({
+        week: item.week,
+        focus: item.domain,
+        tasks: item.tasks,
+        resources: item.resources
+      }))
+    });
+
+  } catch (err) {
+
+    alert(getErrorMessage(err));
+
+  } finally {
+
+    setLoading(false);
+
+  }
+};
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white flex flex-col md:flex-row">
       <AppSidebar />
