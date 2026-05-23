@@ -14,6 +14,7 @@
   ],
   "author": "Sathvika",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.6.8",
     "dotenv": "^16.4.5",
     "node-telegram-bot-api": "^0.65.1"

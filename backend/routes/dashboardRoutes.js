@@ -153,24 +153,31 @@
 
 // };
 
-
 const express = require("express");
 
 const router = express.Router();
 
-router.get("/stats", async (req, res) => {
+const Quiz = require("../models/Quiz");
+
+router.get("/analytics", async (req, res) => {
 
   try {
 
+    const quizzes = await Quiz.find();
+
+    const total = quizzes.length;
+
+    const avg =
+      total > 0
+        ? quizzes.reduce(
+            (a, q) => a + q.totalScore,
+            0
+          ) / total
+        : 0;
+
     res.json({
-      totalQuizzes: 12,
-      averageScore: 78,
-      completedPlans: 4,
-      recommendations: [
-        "Learn JWT Authentication",
-        "Practice React Hooks",
-        "Build Full Stack Projects"
-      ]
+      totalQuizzes: total,
+      averageScore: avg
     });
 
   } catch (error) {
