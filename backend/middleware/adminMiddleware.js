@@ -1,4 +1,9 @@
 const adminOnly = (req, res, next) => {
+  // ✅ FIX — Guard if protect middleware wasn't used before this
+  if (!req.user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
   const adminEmail = process.env.ADMIN_EMAIL;
   const isAdmin =
     req.user?.role === "admin" ||
@@ -8,7 +13,7 @@ const adminOnly = (req, res, next) => {
     return next();
   }
 
-  res.status(403).json({ message: "Admin access required" });
+  return res.status(403).json({ message: "Admin access required" });
 };
 
 module.exports = { adminOnly };

@@ -63,6 +63,7 @@ export default function LoginPage() {
             placeholder="Full name"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            suppressHydrationWarning
             className="w-full p-3 mb-4 rounded-lg bg-[#1e293b] border border-white/10 outline-none focus:border-cyan-400"
           />
         )}
@@ -73,6 +74,7 @@ export default function LoginPage() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          suppressHydrationWarning
           className="w-full p-3 mb-4 rounded-lg bg-[#1e293b] border border-white/10 outline-none focus:border-cyan-400"
         />
 
@@ -83,6 +85,7 @@ export default function LoginPage() {
           minLength={6}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          suppressHydrationWarning
           className="w-full p-3 mb-4 rounded-lg bg-[#1e293b] border border-white/10 outline-none focus:border-cyan-400"
         />
 

@@ -3,130 +3,170 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppSidebar from "../../components/AppSidebar";
-import api, { authHeaders, getErrorMessage } from "../../lib/api";
-
-const LANGUAGES = [
-  { code: "en", label: "English" },
-  { code: "hi", label: "Hindi" },
-  { code: "te", label: "Telugu" },
-  { code: "es", label: "Spanish" },
-  { code: "fr", label: "French" }
-];
+import api, {
+  authHeaders,
+  getErrorMessage
+} from "../../lib/api";
 
 export default function ProfilePage() {
+
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [showAdmin, setShowAdmin] = useState(false);
+
+  const [profile, setProfile] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
 
-    api
-      .get("/api/profile/me", { headers: authHeaders() })
-      .then((res) => setUser(res.data.user))
-      .catch(() => router.push("/login"));
+    const fetchProfile =
+      async () => {
 
-    api
-      .get("/api/dashboard/stats", { headers: authHeaders() })
-      .then((res) => setShowAdmin(!!res.data.isAdmin))
-      .catch(() => {});
+        const token =
+          localStorage.getItem("token");
+
+        if (!token) {
+          return router.push("/login");
+        }
+
+        try {
+
+          const res = await api.get(
+            "/api/profile",
+            {
+              headers:
+                authHeaders()
+            }
+          );
+
+          setProfile(res.data);
+
+        } catch (err) {
+
+          alert(
+            getErrorMessage(err)
+          );
+
+        } finally {
+
+          setLoading(false);
+
+        }
+
+      };
+
+    fetchProfile();
+
   }, [router]);
 
-  const saveLanguage = async (code) => {
-    const token = localStorage.getItem("token");
-    setSaving(true);
-    try {
-      const res = await api.patch(
-        "/api/profile/me",
-        { preferred_language: code },
-        { headers: authHeaders() }
-      );
-      setUser(res.data.user);
-    } catch {
-      alert(getErrorMessage(err));
-    } finally {
-      setSaving(false);
-    }
-  };
+  if (loading) {
 
-  if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white">
-        Loading profile...
+      <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white text-2xl">
+        Loading Profile...
       </div>
     );
+
   }
 
   return (
+
     <div className="min-h-screen bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white flex flex-col md:flex-row">
-      <AppSidebar showAdmin={showAdmin} />
+
+      <AppSidebar />
+
       <div className="flex-1 p-4 md:p-10">
-        <h1 className="text-5xl font-bold mb-10">User Profile 👤</h1>
 
-        <div className="bg-white/10 rounded-3xl p-10 max-w-2xl border border-white/10">
-          <div className="flex items-center gap-6 mb-10">
-            <div className="w-24 h-24 rounded-full bg-cyan-400 flex items-center justify-center text-4xl font-bold text-black uppercase">
-              {user.name?.[0] || "U"}
-            </div>
-            <div>
-              <h2 className="text-3xl font-bold">{user.name}</h2>
-              <p className="text-gray-300">AI Learning Enthusiast</p>
-            </div>
+        <h1 className="text-5xl font-bold mb-8">
+          My Profile 👤
+        </h1>
+
+        <div className="bg-white/10 p-8 rounded-3xl border border-white/10 max-w-3xl space-y-6">
+
+          <div>
+
+            <p className="text-gray-400 mb-1">
+              Name
+            </p>
+
+            <h2 className="text-2xl font-bold">
+              {profile?.name || "N/A"}
+            </h2>
+
           </div>
 
-          <div className="space-y-5 text-xl">
-            <p>
-              <strong>Email:</strong> {user.email}
+          <div>
+
+            <p className="text-gray-400 mb-1">
+              Email
             </p>
-            <p>
-              <strong>Domains:</strong>{" "}
-              {user.domains?.length ? user.domains.join(", ") : "Not set"}
-            </p>
-            <p>
-              <strong>Difficulty:</strong> {user.difficulty_level || user.level}
-            </p>
-            <p>
-              <strong>Average Score:</strong> {user.average_score?.toFixed?.(1) || user.average_score || 0}
-            </p>
-            <p>
-              <strong>Weak Topics:</strong>{" "}
-              {user.weak_topics?.length ? user.weak_topics.join(", ") : "None"}
-            </p>
-            <p>
-              <strong>Goals:</strong>{" "}
-              {user.goals?.length ? user.goals.join(", ") : "Not set"}
-            </p>
+
+            <h2 className="text-xl">
+              {profile?.email || "N/A"}
+            </h2>
+
           </div>
 
-          <div className="mt-10 pt-8 border-t border-white/10">
-            <h3 className="text-xl font-bold mb-4">🌐 Multilingual AI Responses</h3>
-            <p className="text-gray-400 text-sm mb-4">
-              Quizzes, study plans, and resume feedback will use your selected language.
+          <div>
+
+            <p className="text-gray-400 mb-1">
+              Difficulty Level
             </p>
+
+            <h2 className="text-xl text-cyan-400">
+              {profile?.difficulty_level || "Beginner"}
+            </h2>
+
+          </div>
+
+          <div>
+
+            <p className="text-gray-400 mb-1">
+              Average Score
+            </p>
+
+            <h2 className="text-xl">
+              {profile?.average_score || 0}
+            </h2>
+
+          </div>
+
+          <div>
+
+            <p className="text-gray-400 mb-2">
+              Weak Topics
+            </p>
+
             <div className="flex flex-wrap gap-3">
-              {LANGUAGES.map((lang) => (
-                <button
-                  key={lang.code}
-                  onClick={() => saveLanguage(lang.code)}
-                  disabled={saving}
-                  className={`px-4 py-2 rounded-xl border transition ${
-                    user.preferred_language === lang.code
-                      ? "bg-cyan-400 text-black border-cyan-400"
-                      : "border-white/20 hover:border-cyan-400"
-                  }`}
-                >
-                  {lang.label}
-                </button>
-              ))}
+
+              {profile?.weak_topics?.length > 0
+                ? profile.weak_topics.map(
+                    (topic, i) => (
+                      <span
+                        key={i}
+                        className="bg-red-500/20 text-red-300 px-4 py-2 rounded-full"
+                      >
+                        {topic}
+                      </span>
+                    )
+                  )
+                : (
+                  <span className="text-gray-400">
+                    No weak topics yet
+                  </span>
+                )}
+
             </div>
+
           </div>
+
         </div>
+
       </div>
+
     </div>
+
   );
+
 }

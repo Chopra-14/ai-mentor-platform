@@ -5,13 +5,8 @@ import { useRouter } from "next/navigation";
 import api, { authHeaders } from "../../lib/api";
 import AppSidebar from "../../components/AppSidebar";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  ResponsiveContainer
+  BarChart, Bar, XAxis, YAxis, Tooltip,
+  CartesianGrid, ResponsiveContainer
 } from "recharts";
 
 export default function AdminPage() {
@@ -22,7 +17,21 @@ export default function AdminPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+
+    // ✅ FIX — Redirect if no token
     if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    // ✅ FIX — Frontend role check before making any API call
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      if (payload.role !== "admin") {
+        router.push("/dashboard");
+        return;
+      }
+    } catch {
       router.push("/login");
       return;
     }
@@ -40,12 +49,17 @@ export default function AdminPage() {
         }
       })
       .finally(() => setLoading(false));
-  }, [router]);
+
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // ✅ FIX — Empty deps array (removed router to prevent re-runs)
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white">
-        Loading admin panel...
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-xl font-bold">Loading Admin Panel...</p>
+        </div>
       </div>
     );
   }
@@ -57,7 +71,7 @@ export default function AdminPage() {
           <p className="text-xl text-red-400 mb-4">{error}</p>
           <button
             onClick={() => router.push("/dashboard")}
-            className="text-cyan-400 underline"
+            className="text-cyan-400 underline hover:text-cyan-300"
           >
             Back to Dashboard
           </button>
@@ -77,29 +91,15 @@ export default function AdminPage() {
         <h1 className="text-5xl font-bold mb-2">Admin Panel 🛡️</h1>
         <p className="text-gray-300 mb-10">Platform monitoring and user analytics</p>
 
+        {/* STAT CARDS — ✅ FIX: ?? fallbacks so no crash if data is null */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-          <div className="bg-white/10 p-6 rounded-3xl">
-            <p className="text-gray-400">Total Users</p>
-            <p className="text-4xl font-bold text-cyan-400">{data.userCount}</p>
-          </div>
-          <div className="bg-white/10 p-6 rounded-3xl">
-            <p className="text-gray-400">Total Quizzes</p>
-            <p className="text-4xl font-bold text-pink-400">{data.quizCount}</p>
-          </div>
-          <div className="bg-white/10 p-6 rounded-3xl">
-            <p className="text-gray-400">Recommendations</p>
-            <p className="text-4xl font-bold text-green-400">
-              {data.recommendationCount}
-            </p>
-          </div>
-          <div className="bg-white/10 p-6 rounded-3xl">
-            <p className="text-gray-400">Platform Accuracy</p>
-            <p className="text-4xl font-bold text-yellow-400">
-              {data.platformAccuracy}%
-            </p>
-          </div>
+          <StatCard label="Total Users"       value={data?.userCount ?? 0}            color="text-cyan-400"   />
+          <StatCard label="Total Quizzes"     value={data?.quizCount ?? 0}            color="text-pink-400"   />
+          <StatCard label="Recommendations"   value={data?.recommendationCount ?? 0}  color="text-green-400"  />
+          <StatCard label="Platform Accuracy" value={`${data?.platformAccuracy ?? 0}%`} color="text-yellow-400" />
         </div>
 
+        {/* CHARTS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
           <div className="bg-white/10 p-8 rounded-3xl">
             <h2 className="text-2xl font-bold mb-6">Quizzes by Domain</h2>
@@ -109,14 +109,8 @@ export default function AdminPage() {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                   <XAxis dataKey="domain" stroke="#94a3b8" />
                   <YAxis stroke="#94a3b8" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1e293b",
-                      border: "none",
-                      borderRadius: "8px"
-                    }}
-                  />
-                  <Bar dataKey="count" fill="#22d3ee" />
+                  <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "none", borderRadius: "8px" }} />
+                  <Bar dataKey="count" fill="#22d3ee" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -126,20 +120,30 @@ export default function AdminPage() {
 
           <div className="bg-white/10 p-8 rounded-3xl">
             <h2 className="text-2xl font-bold mb-6">Recent Signups</h2>
-            {data.signupsByDay?.length > 0 ? (
+            {data?.signupsByDay?.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={data.signupsByDay}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis dataKey="_id" stroke="#94a3b8" />
+                  {/* ✅ FIX — Format _id date string into readable label */}
+                  <XAxis
+                    dataKey="_id"
+                    stroke="#94a3b8"
+                    tickFormatter={(val) =>
+                      new Date(val).toLocaleDateString("en-US", {
+                        month: "short", day: "numeric"
+                      })
+                    }
+                  />
                   <YAxis stroke="#94a3b8" />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1e293b",
-                      border: "none",
-                      borderRadius: "8px"
-                    }}
+                    contentStyle={{ backgroundColor: "#1e293b", border: "none", borderRadius: "8px" }}
+                    labelFormatter={(val) =>
+                      new Date(val).toLocaleDateString("en-US", {
+                        month: "long", day: "numeric", year: "numeric"
+                      })
+                    }
                   />
-                  <Bar dataKey="count" fill="#4ade80" />
+                  <Bar dataKey="count" fill="#4ade80" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -148,6 +152,7 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {/* USERS TABLE */}
         <div className="bg-white/10 p-8 rounded-3xl mb-8">
           <h2 className="text-2xl font-bold mb-4">Registered Users</h2>
           <div className="overflow-x-auto">
@@ -161,38 +166,72 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.users?.map((u) => (
-                  <tr key={u._id} className="border-b border-white/5">
+                {data?.users?.map((u) => (
+                  <tr key={u._id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <td className="py-3">{u.name}</td>
                     <td className="py-3">{u.email}</td>
-                    <td className="py-3">{u.difficulty_level || u.level}</td>
-                    <td className="py-3 capitalize">{u.role || "user"}</td>
+                    <td className="py-3">{u.difficulty_level || u.level || "—"}</td>
+                    <td className="py-3 capitalize">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        u.role === "admin"
+                          ? "bg-cyan-400/20 text-cyan-400"
+                          : "bg-white/10 text-gray-300"
+                      }`}>
+                        {u.role || "user"}
+                      </span>
+                    </td>
                   </tr>
                 ))}
+                {/* ✅ FIX — Empty state for users table */}
+                {(!data?.users || data.users.length === 0) && (
+                  <tr>
+                    <td colSpan={4} className="py-6 text-center text-gray-400">
+                      No users registered yet.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
+        {/* RECENT QUIZ ACTIVITY */}
         <div className="bg-white/10 p-8 rounded-3xl">
           <h2 className="text-2xl font-bold mb-4">Recent Quiz Activity</h2>
           <div className="space-y-3">
-            {data.recentQuizzes?.map((q) => (
+            {data?.recentQuizzes?.map((q) => (
               <div
                 key={q._id}
-                className="flex justify-between items-center bg-[#1e293b] p-4 rounded-xl"
+                className="flex justify-between items-center bg-[#1e293b] p-4 rounded-xl hover:bg-[#263548] transition-colors"
               >
                 <span>
-                  {q.user?.name || "User"} — {q.domain} ({q.difficulty})
+                  <span className="text-cyan-400 font-semibold">{q.user?.name || "User"}</span>
+                  {" — "}{q.domain}
+                  <span className="text-gray-400 text-sm ml-2">({q.difficulty})</span>
                 </span>
                 <span className="text-gray-400 text-sm">
-                  {new Date(q.createdAt).toLocaleDateString()}
+                  {new Date(q.createdAt).toLocaleDateString("en-US", {
+                    month: "short", day: "numeric", year: "numeric"
+                  })}
                 </span>
               </div>
             ))}
+            {/* ✅ FIX — Empty state for quiz activity */}
+            {(!data?.recentQuizzes || data.recentQuizzes.length === 0) && (
+              <p className="text-gray-400 text-center py-4">No quiz activity yet.</p>
+            )}
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, color }) {
+  return (
+    <div className="bg-white/10 p-6 rounded-3xl hover:bg-white/15 transition-colors">
+      <p className="text-gray-400 mb-2">{label}</p>
+      <p className={`text-4xl font-bold ${color}`}>{value}</p>
     </div>
   );
 }

@@ -2,200 +2,385 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { FaArrowLeft } from "react-icons/fa";
+import AppSidebar from "../../components/AppSidebar";
 import api, { authHeaders, getErrorMessage } from "../../lib/api";
+
+const DOMAINS = [
+  "React", "Node.js", "Python", "DevOps",
+  "System Design", "Docker", "MongoDB", "JavaScript"
+];
 
 export default function QuizPage() {
   const router = useRouter();
+
   const [domain, setDomain] = useState("");
-  const [isStarted, setIsStarted] = useState(false);
+  const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [quizData, setQuizData] = useState(null);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answer, setAnswer] = useState("");
-  const [feedback, setFeedback] = useState(null);
-  const [evaluating, setEvaluating] = useState(false);
-  const [listening, setListening] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState([]);
+  const [currentAnswer, setCurrentAnswer] = useState("");
+  const [completed, setCompleted] = useState(false);
+  const [result, setResult] = useState(null);
+  const [formError, setFormError] = useState("");
+  const [answerError, setAnswerError] = useState("");
 
-  const speakQuestion = () => {
-    if (!quizData?.questions?.[currentQuestionIndex]?.question) return;
-    const utterance = new SpeechSynthesisUtterance(
-      quizData.questions[currentQuestionIndex].question
-    );
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const startVoiceInput = () => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Voice input is not supported in this browser. Use Chrome or Edge.");
-      return;
-    }
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.onstart = () => setListening(true);
-    recognition.onend = () => setListening(false);
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setAnswer((prev) => (prev ? `${prev} ${transcript}` : transcript));
-    };
-    recognition.start();
-  };
-
+  // ✅ FIX — Auth check on page load
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
       router.push("/login");
     }
-  }, [router]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const startQuiz = async () => {
-    if (!domain) return alert("Please enter a domain");
+    setFormError("");
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    // ✅ FIX — Inline error instead of alert()
+    if (!domain.trim()) {
+      setFormError("Please select or enter a domain.");
+      return;
+    }
+
     setLoading(true);
+
     try {
       const res = await api.post(
         "/api/quiz/generate",
         { domain },
         { headers: authHeaders() }
       );
-      setQuizData(res.data.quiz);
-      setIsStarted(true);
+      setQuiz(res.data.quiz);
     } catch (err) {
-      console.error(err);
-      alert(getErrorMessage(err));
+      // ✅ FIX — Handle 401 mid-session
+      if (err.response?.status === 401) {
+        router.push("/login");
+        return;
+      }
+      setFormError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
   };
 
-  const submitAnswer = async () => {
-    if (!answer.trim()) return;
-    setEvaluating(true);
+  const nextQuestion = async () => {
+    setAnswerError("");
+
+    // ✅ FIX — Inline error instead of alert()
+    if (!currentAnswer.trim()) {
+      setAnswerError("Please write your answer before continuing.");
+      return;
+    }
+
+    const updatedAnswers = [...answers, currentAnswer];
+    setAnswers(updatedAnswers);
+    setCurrentAnswer("");
+
+    const isLast = currentQuestion + 1 >= quiz.questions.length;
+
+    if (!isLast) {
+      setCurrentQuestion(currentQuestion + 1);
+      return;
+    }
+
+    // ✅ FIX — Submitting state prevents double-click
+    setSubmitting(true);
+
     try {
-      const res = await api.post(
+      // ✅ FIX — Evaluate answers via AI (not hardcoded)
+      const evalRes = await api.post(
         "/api/quiz/evaluate",
         {
-          quizId: quizData._id,
-          questionIndex: currentQuestionIndex,
-          user_answer: answer,
+          domain: quiz.domain,
+          difficulty: quiz.difficulty,
+          questions: quiz.questions,
+          answers: updatedAnswers
         },
         { headers: authHeaders() }
       );
-      setFeedback(res.data);
+
+      const evalData = evalRes.data;
+      setResult(evalData);
+
+      // ✅ FIX — Save REAL performance data from AI evaluation
+      await api.post(
+        "/api/quiz/performance",
+        {
+          average_score: evalData.scorePercent ?? 0,
+          weak_topics: evalData.weakAreas ?? []
+        },
+        { headers: authHeaders() }
+      );
+
+      // ✅ FIX — Only set completed AFTER successful API calls
+      setCompleted(true);
+
     } catch (err) {
-      console.error(err);
-      alert(getErrorMessage(err));
+      if (err.response?.status === 401) {
+        router.push("/login");
+        return;
+      }
+      setAnswerError("Failed to submit quiz. Please try again.");
     } finally {
-      setEvaluating(false);
+      setSubmitting(false);
     }
   };
 
-  const nextQuestion = () => {
-    if (currentQuestionIndex < quizData.questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setAnswer("");
-      setFeedback(null);
-    } else {
-      router.push("/dashboard");
-    }
+  // ✅ FIX — Reset all state for "Take Another Quiz"
+  const resetQuiz = () => {
+    setQuiz(null);
+    setCompleted(false);
+    setResult(null);
+    setAnswers([]);
+    setCurrentQuestion(0);
+    setCurrentAnswer("");
+    setDomain("");
+    setFormError("");
+    setAnswerError("");
   };
 
-  if (!isStarted) {
-    return (
-      <div className="min-h-screen bg-[#0f172a] text-white flex flex-col items-center justify-center p-10">
-        <Link href="/dashboard" className="absolute top-10 left-10 text-cyan-400 hover:text-cyan-300 flex items-center gap-2">
-          <FaArrowLeft /> Back to Dashboard
-        </Link>
-        <h1 className="text-5xl font-bold mb-10 text-cyan-400">Adaptive AI Quiz 🚀</h1>
-        <div className="bg-white/10 p-8 rounded-3xl border border-white/10 w-full max-w-md text-center">
-          <h2 className="text-2xl mb-6">Choose a Domain</h2>
-          <input 
-            type="text" 
-            placeholder="e.g., Docker, Next.js, System Design" 
-            className="w-full p-4 rounded-xl bg-[#1e293b] border border-white/10 text-white outline-none mb-6"
-            value={domain}
-            onChange={(e) => setDomain(e.target.value)}
-          />
-          <button 
-            onClick={startQuiz}
-            disabled={loading}
-            className="w-full bg-cyan-400 text-black px-8 py-4 rounded-xl font-bold hover:scale-105 transition disabled:opacity-50"
-          >
-            {loading ? "Generating Quiz with AI..." : "Start AI Quiz"}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const currentQuestion = quizData.questions[currentQuestionIndex];
+  const progress = quiz
+    ? Math.round((currentQuestion / quiz.questions.length) * 100)
+    : 0;
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white p-10 flex flex-col items-center">
-      <div className="w-full max-w-3xl">
-        <div className="flex justify-between items-center mb-10">
-          <h1 className="text-4xl font-bold text-cyan-400">Question {currentQuestionIndex + 1} of {quizData.questions.length}</h1>
-          <span className="text-xl text-gray-400">Domain: <span className="text-white capitalize">{quizData.domain}</span></span>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white flex flex-col md:flex-row">
+      <AppSidebar />
 
-        <div className="bg-white/10 p-8 rounded-3xl border border-white/10 shadow-2xl">
-          <h2 className="text-2xl mb-6 font-medium">{currentQuestion?.question}</h2>
-          <div className="flex gap-3 mb-4">
+      <div className="flex-1 p-4 md:p-10 overflow-y-auto">
+        <h1 className="text-5xl font-bold mb-2">Adaptive AI Interview 🚀</h1>
+        <p className="text-gray-300 mb-8">
+          Real-time AI interview experience based on your learning profile.
+        </p>
+
+        {/* ── DOMAIN SELECTION ── */}
+        {!quiz && !completed && (
+          <div className="bg-white/10 p-8 rounded-3xl border border-white/10 max-w-xl">
+            <h2 className="text-2xl font-bold mb-2">Choose a Domain</h2>
+            <p className="text-gray-400 mb-6 text-sm">Pick from suggestions or type your own.</p>
+
+            {/* Quick-select chips */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {DOMAINS.map((d) => (
+                <button
+                  key={d}
+                  onClick={() => { setDomain(d); setFormError(""); }}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
+                    domain === d
+                      ? "bg-cyan-400 text-black border-cyan-400"
+                      : "bg-white/10 text-gray-300 border-white/10 hover:border-cyan-400"
+                  }`}
+                >
+                  {d}
+                </button>
+              ))}
+            </div>
+
+            <input
+              type="text"
+              value={domain}
+              onChange={(e) => { setDomain(e.target.value); setFormError(""); }}
+              placeholder="Or type a custom domain..."
+              className="w-full p-4 rounded-xl bg-[#1e293b] border border-white/10 text-white outline-none mb-2 focus:border-cyan-400 transition-colors"
+            />
+
+            {formError && (
+              <p className="text-red-400 text-sm mb-3">{formError}</p>
+            )}
+
             <button
-              type="button"
-              onClick={speakQuestion}
-              className="text-sm bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20"
+              onClick={startQuiz}
+              disabled={loading}
+              className="w-full bg-cyan-400 text-black py-4 rounded-xl font-bold mt-4 disabled:opacity-50 hover:bg-cyan-300 transition-colors"
             >
-              🔊 Listen (Voice Assistant)
-            </button>
-            <button
-              type="button"
-              onClick={startVoiceInput}
-              className="text-sm bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20"
-            >
-              {listening ? "🎤 Listening..." : "🎤 Voice Answer"}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  Generating Quiz...
+                </span>
+              ) : "Start AI Interview →"}
             </button>
           </div>
+        )}
 
-          {!feedback ? (
-            <>
-              <textarea
-                placeholder="Type your answer here. Be as detailed as possible..."
-                rows="8"
-                className="w-full p-5 rounded-2xl bg-[#1e293b] border border-white/10 outline-none focus:border-cyan-400 transition"
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-              />
-              <button 
-                onClick={submitAnswer}
-                disabled={evaluating}
-                className="mt-6 w-full bg-cyan-400 text-black px-8 py-4 rounded-2xl font-bold hover:bg-cyan-300 transition disabled:opacity-50"
-              >
-                {evaluating ? "AI is evaluating your answer..." : "Submit Answer"}
-              </button>
-            </>
-          ) : (
-            <div className="mt-6 animate-fade-in">
-              <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/10">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="text-3xl font-bold p-4 bg-cyan-400/20 text-cyan-400 rounded-full">
-                    {feedback.score}/10
-                  </div>
-                  <h3 className="text-xl font-bold">AI Feedback</h3>
-                </div>
-                <p className="whitespace-pre-wrap text-gray-300 leading-relaxed">{feedback.feedback}</p>
+        {/* ── QUIZ SCREEN ── */}
+        {quiz && !completed && (
+          <div className="max-w-4xl">
+            {/* Header */}
+            <div className="bg-white/10 p-6 rounded-3xl mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-3xl font-bold text-cyan-400">{quiz.domain} Interview</h2>
+                <span className="bg-white/10 px-4 py-2 rounded-full text-sm">
+                  {currentQuestion + 1} / {quiz.questions.length}
+                </span>
               </div>
-              <button 
+              <p className="text-gray-300 text-sm mb-3">
+                Difficulty: <span className="text-cyan-400 font-semibold">{quiz.difficulty}</span>
+              </p>
+              {/* Progress bar */}
+              <div className="w-full bg-[#1e293b] rounded-full h-2">
+                <div
+                  className="bg-cyan-400 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Question card */}
+            <div className="bg-white/10 p-8 rounded-3xl border border-white/10">
+              <h3 className="text-2xl font-bold mb-6 leading-relaxed">
+                {quiz.questions[currentQuestion]?.question}
+              </h3>
+
+              <textarea
+                value={currentAnswer}
+                onChange={(e) => { setCurrentAnswer(e.target.value); setAnswerError(""); }}
+                placeholder="Write your detailed answer here..."
+                rows={8}
+                className="w-full p-5 rounded-2xl bg-[#1e293b] border border-white/10 text-white outline-none mb-3 focus:border-cyan-400 transition-colors resize-none"
+              />
+
+              {answerError && (
+                <p className="text-red-400 text-sm mb-4">{answerError}</p>
+              )}
+
+              <button
                 onClick={nextQuestion}
-                className="mt-6 w-full bg-green-400 text-black px-8 py-4 rounded-2xl font-bold hover:bg-green-300 transition"
+                disabled={submitting}
+                className="bg-cyan-400 text-black px-8 py-4 rounded-xl font-bold disabled:opacity-50 hover:bg-cyan-300 transition-colors"
               >
-                {currentQuestionIndex < quizData.questions.length - 1 ? "Next Question" : "Finish Quiz"}
+                {submitting ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Evaluating...
+                  </span>
+                ) : currentQuestion + 1 === quiz.questions.length
+                  ? "Submit Interview ✓"
+                  : "Next Question →"}
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* ── RESULTS SCREEN ── */}
+        {completed && result && (
+          <div className="max-w-4xl">
+            <div className="bg-white/10 p-10 rounded-3xl border border-white/10 mb-6">
+              <h2 className="text-5xl font-bold text-cyan-400 mb-2">Interview Completed 🎉</h2>
+              <p className="text-gray-400 mb-8">
+                Domain: <span className="text-white font-semibold">{quiz.domain}</span> ·{" "}
+                Difficulty: <span className="text-white font-semibold">{quiz.difficulty}</span>
+              </p>
+
+              {/* ✅ FIX — Dynamic score cards from AI evaluation */}
+              <div className="grid md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-[#1e293b] p-6 rounded-2xl text-center">
+                  <p className="text-gray-400 mb-2 text-sm">Overall Score</p>
+                  <h3 className="text-4xl font-bold text-cyan-400">
+                    {result.score ?? "—"} / {quiz.questions.length}
+                  </h3>
+                </div>
+                <div className="bg-[#1e293b] p-6 rounded-2xl text-center">
+                  <p className="text-gray-400 mb-2 text-sm">Accuracy</p>
+                  <h3 className="text-4xl font-bold text-green-400">
+                    {result.scorePercent ?? 0}%
+                  </h3>
+                </div>
+                <div className="bg-[#1e293b] p-6 rounded-2xl text-center">
+                  <p className="text-gray-400 mb-2 text-sm">Performance</p>
+                  <h3 className={`text-2xl font-bold ${
+                    (result.scorePercent ?? 0) >= 80 ? "text-green-400" :
+                    (result.scorePercent ?? 0) >= 50 ? "text-yellow-400" : "text-red-400"
+                  }`}>
+                    {result.performance ?? "—"}
+                  </h3>
+                </div>
+              </div>
+
+              {/* ✅ FIX — Dynamic weak areas from AI */}
+              {result.weakAreas?.length > 0 && (
+                <div className="bg-[#1e293b] p-6 rounded-2xl mb-6">
+                  <h3 className="text-xl font-bold text-red-400 mb-4">⚠️ Weak Areas Identified</h3>
+                  <ul className="list-disc list-inside text-gray-300 space-y-2">
+                    {result.weakAreas.map((area, i) => (
+                      <li key={i}>{area}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* ✅ FIX — Dynamic AI recommendation */}
+              {result.recommendation && (
+                <div className="bg-[#1e293b] p-6 rounded-2xl mb-6">
+                  <h3 className="text-xl font-bold text-cyan-400 mb-4">🤖 AI Recommendation</h3>
+                  <p className="text-gray-300 leading-relaxed">{result.recommendation}</p>
+                </div>
+              )}
+
+              {/* Per-question feedback */}
+              {result.feedback?.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-cyan-400 mb-4">📝 Question Feedback</h3>
+                  <div className="space-y-4">
+                    {result.feedback.map((fb, index) => (
+                      <div key={index} className="bg-[#1e293b] p-6 rounded-2xl">
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="text-cyan-400 font-bold pr-4">
+                            Q{index + 1}: {quiz.questions[index]?.question}
+                          </h4>
+                          <span className={`shrink-0 text-sm font-bold px-3 py-1 rounded-full ${
+                            fb.score >= 7 ? "bg-green-400/20 text-green-400" :
+                            fb.score >= 4 ? "bg-yellow-400/20 text-yellow-400" :
+                            "bg-red-400/20 text-red-400"
+                          }`}>
+                            {fb.score}/10
+                          </span>
+                        </div>
+                        <p className="text-gray-400 text-sm mb-2">
+                          Your answer:{" "}
+                          <span className="text-gray-300">{answers[index]}</span>
+                        </p>
+                        {fb.comment && (
+                          <p className="text-gray-300 text-sm border-l-2 border-cyan-400 pl-3 mt-2">
+                            {fb.comment}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ✅ FIX — Action buttons */}
+              <div className="flex gap-4 mt-6">
+                <button
+                  onClick={resetQuiz}
+                  className="flex-1 bg-cyan-400 text-black py-4 rounded-xl font-bold hover:bg-cyan-300 transition-colors"
+                >
+                  Take Another Quiz 🔄
+                </button>
+                <button
+                  onClick={() => router.push("/analytics")}
+                  className="flex-1 bg-white/10 text-white py-4 rounded-xl font-bold hover:bg-white/20 transition-colors border border-white/10"
+                >
+                  View Analytics 📊
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
